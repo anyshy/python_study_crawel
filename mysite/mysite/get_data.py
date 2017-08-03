@@ -1,14 +1,26 @@
 # encoding = utf-8
 import json
-client = MongoClient('mongodb://localhost:27017/') # 连接到mongodb
-db = client.Music #打开数据库Library
-collection=db.MusicInfoSorted # 打开数据表MusicInfoSorted
-# 查找全部
-cursor = collection.find()
+from pymongo import MongoClient
+
+def GetMusicData():
+    client = MongoClient("localhost", 27017)
+    db = client.Music 
+    collection=db.MusicInfo
+    # 查找全部
+    cursor = collection.find()
+    songlists=[]
+
+    for song in cursor:
+        tmp=[song['name'],song['commentTotals']]
+        songlists.append(tmp)
+    
+    songlists.sort(reverse=True)
+    return songlists
+
 # topSongMessage = ''
 # f=open('E:\\topSongMessage.md','w') 
-for song in cursor:
+
     # topSongMessage +="1. "+song['artist'][0]+"  ["+song['name']+"]("+ song['url']+")\n"
-    print song['name'], song['commentTotals']
+    #print (song['name'], song['commentTotals'])
 # f.write(topSongMessage.encode('utf-8'))    
 # f.close()

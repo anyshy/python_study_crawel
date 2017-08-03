@@ -6,6 +6,9 @@ import os, json
 import base64
 from Crypto.Cipher import AES
 from pprint import pprint
+import binascii
+import hashlib
+from Crypto.Cipher import AES
 from pymongo import MongoClient
 
 Default_Header = {
@@ -44,22 +47,24 @@ def getPlayList(playListId):
         songId = startIndex.split('=')[1]
         readEver(songId)
 
-
 def aesEncrypt(text, secKey):
     pad = 16 - len(text) % 16
     text = text + pad * chr(pad)
     encryptor = AES.new(secKey, 2, '0102030405060708')
     ciphertext = encryptor.encrypt(text)
     ciphertext = base64.b64encode(ciphertext)
-    return ciphertext
+    return ciphertext.decode()
+
 
 def rsaEncrypt(text, pubKey, modulus):
-    text = text[::-1]
-    rs = int(text.encode('hex'), 16) ** int(pubKey, 16) % int(modulus, 16)
+    text = text[::-1].encode()
+    rs = int(binascii.hexlify(text), 16)**int(pubKey, 16) % int(modulus, 16)
     return format(rs, 'x').zfill(256)
 
+
 def createSecretKey(size):
-    return (''.join(map(lambda xx: (hex(ord(xx))[2:]), os.urandom(size))))[0:16] #创建一个16位的随机数
+    return ''.join( [ hex(x)[2:] for x in os.urandom(size) ] )[0:16]
+
 
 def readEver(songId):  
     headers = {
@@ -104,16 +109,16 @@ def readEver(songId):
     total = songCommment['total'] #得到数据的评论数
 
     if int(total) > 1000:
-    	song = {} #新建一个song对象，用来存放数据
+        song = {} #新建一个song对象，用来存放数据
         songInfo = reqInfo.json()['songs'][0]
-    	song['name'] = songInfo['name'] #歌曲名
+        song['name'] = songInfo['name'] #歌曲名
         artists = songInfo['artists']
         song['artist']=[]
         for i in artists:
             song['artist'].append(i['name']+"")
         song['commentTotals'] = int(total) #评论数
         song['url']='http://music.163.com/#/song?id='+songId
-    	song['api_data'] = songUrl
+        song['api_data'] = songUrl
         collection.insert(song) #插入数据
     else:
         pass
